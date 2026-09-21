@@ -1,19 +1,37 @@
 class Account:
-    """Blueprint of the bank account."""
+    """
+    Blueprint of the bank account.
+    """
     def __init__(self,name:str,acc_no:int) -> None:
-        """Constructor for Account Class"""
+        """
+        Constructor for Account Class
+        """
         self.name = name
         self.acc_no = acc_no
         self.__balance:int = 0
 
     def get_balance(self):
-        """Function for getting value of balance."""
+        """
+        Function for getting value of balance.
+        """
         return self.__balance   
 
-    def set_balance(self,new_balance:int):
-        """Function to set the value of balance"""
-        self.__balance = new_balance
+    def deposit(self,deposit_amount:int) -> None:
+        """
+        Deposit function of the account.
+        """
+        if deposit_amount > 0:
+            self.__balance += deposit_amount
+        else:
+            print("Deposit value should be positive")
 
-a = Account(name="Anuj",acc_no=48423)
-a.set_balance(525)
-print(a.get_balance())
+    def withdraw(self,withdraw_amount:int) -> None:
+        """
+        Withdraw function of account.
+        """
+        if withdraw_amount > 0:
+            if self.__balance > withdraw_amount + 500:
+                self.__balance -= withdraw_amount
+        else:
+            print("Withdrawl cannot be positive")
+
