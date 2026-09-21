@@ -14,7 +14,7 @@ class Account:
         self.is_active = True
 
     def __str__(self) -> str:
-            return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.get_balance()}\nTransaction history = {self.__transactions}"""
+            return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.get_balance}\nTransaction history = {self.__transactions}"""
 
     @property
     def get_balance(self):
