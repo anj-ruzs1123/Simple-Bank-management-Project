@@ -21,7 +21,7 @@ class Transaction:
         Constructor for Transaction class
         """
         self.trasanction_id = uuid.uuid4().hex[:12]
-        self.timestamp = datetime.now().strftime("%Y-%m-%D %H:%M:%S")
+        self.timestamp = datetime.now().strftime("%d/%m/%y %H:%M:%S")
         self.transactiontype = transactiontype
         self.amount = amount
         self.balance_after = balance_after
@@ -31,7 +31,7 @@ class Transaction:
         """
         Return a string when we print Transaction object
         """
-        s =  f"Timestamp : {self.timestamp}\nTransaction_ID : {self.trasanction_id}\n{self.transactiontype}\nAmount : {self.amount}\nBalance : {self.balance_after}\n{self.description}"
+        s =  f"Timestamp : {self.timestamp}\nTransaction_ID : {self.trasanction_id}\n{self.transactiontype.value}\nAmount : {self.amount}\nBalance : {self.balance_after}\n{self.description}"
         return s
 
     def __repr__(self) -> str:
