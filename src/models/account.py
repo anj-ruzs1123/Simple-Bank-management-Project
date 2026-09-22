@@ -1,4 +1,4 @@
-from src.models.transaction import TransactionType,Transaction
+from transaction import TransactionType,Transaction
 
 class Account:
     """
@@ -29,14 +29,14 @@ class Account:
         """
         return self.__balance   
 
-    def deposit(self,deposit_amount:float) -> None:
+    def deposit(self,deposit_amount:float,txn_type:TransactionType = TransactionType.DEPOSIT,description:str = "Deposit in account") -> None:
         """
         Deposit function of the account.
         """
         if self.is_active:
             if deposit_amount > 0:
                 self.__balance += deposit_amount
-                self.__transactions.append(Transaction(TransactionType.DEPOSIT,deposit_amount,self.__balance,description="Deposit in account"))
+                self.__transactions.append(Transaction(txn_type,deposit_amount,self.__balance,description=description))
             else:
                 print("Deposit value should be positive")
         else:
@@ -116,10 +116,57 @@ class Account:
             )
         )
 
+class SavingsAccount(Account):
+    """
+    Specialized Account that provides interest on it's balance.
+    """
+    def __init__(self, name: str, acc_no: float, balance: float = 0, min_bal: float = 500,interest_rate:float = 0.04) -> None:
+        """
+        Constructor for SavingsAccount.
+        Calls the parent constructor using super() and initialized interest_rate.
+        """
+        super().__init__(name, acc_no, balance, min_bal)
+        self.interest_rate = interest_rate
 
-a = Account("anuj",4554,42000)
-b = Account("banuj",7879,45000)
-print(a.balance,"\n",b.balance)
-a.money_transfer(b,415)
-print(a.balance,"\n",b.balance)
-print(a)
+    def apply_interest(self):
+        """
+        Calculates interest earned on current blance and deposits it into the account.
+        Returns the interest amount added.
+        """
+        if not self.is_active:
+            print("Cannot apply interest: Account is frozen.")
+            return 0.0
+        if self.balance <= 0:
+            print("Cannot apply interest: Balance must be positive.")
+            return 0.0
+        # Calculate interest
+        interest = round(self.balance * self.interest_rate,2)
+
+        if interest > 0:
+            self.deposit(
+                interest,
+                txn_type=TransactionType.INTEREST,
+                description=f"Interest credited @{self.interest_rate * 100}%."
+                )
+            print(f"Applied interest of {interest} at rate of {self.interest_rate * 100}%.")
+            return interest
+        return 0.0
+
+    def __str__(self) -> str:
+        """
+        Overrides the parent __str__ to append the interest rate.
+        """
+        base_info = super().__str__()
+        return f"{base_info}\nAccount Type : Savings\nInterest Rate : {self.interest_rate * 100}%"
+
+
+if __name__ == "__main__": 
+    # a = Account("anuj",4554,42000)
+    # b = Account("banuj",7879,45000)
+    # print(a.balance,"\n",b.balance)
+    # a.money_transfer(b,415)
+    # print(a.balance,"\n",b.balance)
+    # print(a)
+    sa = SavingsAccount("Anuj", 9999, balance=10000, interest_rate=0.05)
+    sa.apply_interest()
+    print(sa)
