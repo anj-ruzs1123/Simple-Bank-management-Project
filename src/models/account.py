@@ -96,13 +96,30 @@ class Account:
             print("Transfer failed: Insufficient funds to maintain minimum balance.")
             return
 
-        self.withdraw(transfer_amount)
-        other.deposit(transfer_amount)
+        # Complete the transfer atomically and record both sides as transactions.
+        self.__balance -= transfer_amount
+        other.__balance += transfer_amount
+        self.__transactions.append(
+            Transaction(
+                TransactionType.TRANSFER_OUT,
+                amount=transfer_amount,
+                balance_after=self.__balance,
+                description=f"Transfer to account {other.acc_no}",
+            )
+        )
+        other.__transactions.append(
+            Transaction(
+                TransactionType.TRANSFER_IN,
+                amount=transfer_amount,
+                balance_after=other.__balance,
+                description=f"Transfer from account {self.acc_no}",
+            )
+        )
 
 
-# a = Account("anuj",4554,42000)
-# b = Account("banuj",7879,45000)
-# print(a.balance,"\n",b.balance)
-# a.money_transfer(b,415)
-# print(a.balance,"\n",b.balance)
-# print(a)
+a = Account("anuj",4554,42000)
+b = Account("banuj",7879,45000)
+print(a.balance,"\n",b.balance)
+a.money_transfer(b,415)
+print(a.balance,"\n",b.balance)
+print(a)
