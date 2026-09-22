@@ -1,4 +1,4 @@
-from transaction import TransactionType,Transaction
+from src.models.transaction import TransactionType,Transaction
 
 class Account:
     """
@@ -10,24 +10,24 @@ class Account:
         """
         self.name = name
         self.acc_no = acc_no
-        self.__balance = balance #Private attribute
+        self._balance = balance #Private attribute
         self.minimum_balance = min_bal
-        self.__transactions = [] #private attribute
-        if self.__balance > 0:
-            self.__transactions.append(Transaction(TransactionType.DEPOSIT,self.__balance,self.__balance))
+        self._transactions = [] #private attribute
+        if self._balance > 0:
+            self._transactions.append(Transaction(TransactionType.DEPOSIT,self._balance,self._balance))
         
         self.is_active = True
         
 
     def __str__(self) -> str:
-        return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.balance}\nTransaction history = {self.__transactions}"""
+        return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.balance}\nTransaction history = {self._transactions}"""
 
     @property
     def balance(self) -> float:
         """
         Function for getting value of balance.
         """
-        return self.__balance   
+        return self._balance   
 
     def deposit(self,deposit_amount:float,txn_type:TransactionType = TransactionType.DEPOSIT,description:str = "Deposit in account") -> None:
         """
@@ -36,7 +36,7 @@ class Account:
         if self.is_active:
             if deposit_amount > 0:
                 self.__balance += deposit_amount
-                self.__transactions.append(Transaction(txn_type,deposit_amount,self.__balance,description=description))
+                self._transactions.append(Transaction(txn_type,deposit_amount,self._balance,description=description))
             else:
                 print("Deposit value should be positive")
         else:
@@ -50,7 +50,7 @@ class Account:
             if withdraw_amount > 0:
                 if self.__balance >= withdraw_amount + self.minimum_balance:
                     self.__balance -= withdraw_amount
-                    self.__transactions.append(Transaction(TransactionType.WITHDRAWAL,withdraw_amount,self.__balance,description="Withdrawal from account"))
+                    self._transactions.append(Transaction(TransactionType.WITHDRAWAL,withdraw_amount,self._balance,description="Withdrawal from account"))
                 else:
                     print("Withdrawl exceeds minimum account balance of 500.")
             else:
@@ -63,7 +63,7 @@ class Account:
         """
         For getting the list of tranactions.
         """
-        return self.__transactions
+        return self._transactions
 
     def freeze_account(self) -> None:
         """
@@ -97,13 +97,13 @@ class Account:
             return
 
         # Complete the transfer atomically and record both sides as transactions.
-        self.__balance -= transfer_amount
-        other.__balance += transfer_amount
-        self.__transactions.append(
+        self._balance -= transfer_amount
+        other._balance += transfer_amount
+        self._transactions.append(
             Transaction(
                 TransactionType.TRANSFER_OUT,
                 amount=transfer_amount,
-                balance_after=self.__balance,
+                balance_after=self._balance,
                 description=f"Transfer to account {other.acc_no}",
             )
         )
@@ -111,7 +111,7 @@ class Account:
             Transaction(
                 TransactionType.TRANSFER_IN,
                 amount=transfer_amount,
-                balance_after=other.__balance,
+                balance_after=other._balance,
                 description=f"Transfer from account {self.acc_no}",
             )
         )
@@ -159,14 +159,41 @@ class SavingsAccount(Account):
         base_info = super().__str__()
         return f"{base_info}\nAccount Type : Savings\nInterest Rate : {self.interest_rate * 100}%"
 
+class CurrentAccount(Account):
+    def __init__(
+            self,
+            name: str, 
+            acc_no: float, 
+            balance: float = 0.0, 
+            min_bal: float = 0.0,
+            overdraft_limit:float = 1000.0
+        )-> None:
+        super().__init__(name, acc_no, balance, min_bal)
+        self.overdraft_limit = overdraft_limit
+
+    def withdraw(self,withdraw_amount:float) -> None:
+        if not self.is_active:
+            print("Account is frozen.")
+            return
+        if withdraw_amount > 0:
+            if self.balance - withdraw_amount >= (-self.overdraft_limit):
+                self._balance -= withdraw_amount
+                self._transactions.append(Transaction(TransactionType.WITHDRAWAL,amount=withdraw_amount,balance_after=self.balance,description="Withdrawal successful."))
+            else:
+                print("Withdrawal amount exceeds overdraft limit.")
+        else:
+            print("Withdrawal amount must be greater than 0.")
+
+    def __str__(self) -> str:
+        base = super().__str__()
+        return f"{base}\nAccount Type: Current\nOverdraft Limit : Rs.{self.overdraft_limit}."
+        
 
 if __name__ == "__main__": 
-    # a = Account("anuj",4554,42000)
-    # b = Account("banuj",7879,45000)
-    # print(a.balance,"\n",b.balance)
-    # a.money_transfer(b,415)
-    # print(a.balance,"\n",b.balance)
-    # print(a)
-    sa = SavingsAccount("Anuj", 9999, balance=10000, interest_rate=0.05)
-    sa.apply_interest()
-    print(sa)
+    ca = CurrentAccount("Anuj Corp", 8888, balance=500.0, overdraft_limit=1000.0)
+    print(ca)
+    print("\n--- Withdrawing 1200 (Overdraft) ---")
+    ca.withdraw(1200)
+    print(f"Current Balance: {ca.balance}")  # Should be -700.0!
+    print("\n--- Withdrawing another 400 (Should fail: limit exceeded) ---")
+    ca.withdraw(400)
