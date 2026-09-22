@@ -1,3 +1,5 @@
+from src.models.transaction import TransactionType,Transaction
+
 class Account:
     """
     Blueprint of the bank account.
@@ -8,10 +10,14 @@ class Account:
         """
         self.name = name
         self.acc_no = acc_no
-        self.__balance = balance
+        self.__balance = balance #Private attribute
         self.minimum_balance = min_bal
-        self.__transactions = [f"Initial balance = {self.__balance}"]
+        self.__transactions = [] #private attribute
+        if self.__balance > 0:
+            self.__transactions.append(Transaction(TransactionType.DEPOSIT,self.__balance,self.__balance))
+        
         self.is_active = True
+        
 
     def __str__(self) -> str:
         return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.balance}\nTransaction history = {self.__transactions}"""
@@ -30,7 +36,7 @@ class Account:
         if self.is_active:
             if deposit_amount > 0:
                 self.__balance += deposit_amount
-                self.__transactions.append(f"Added {deposit_amount} to the account.")
+                self.__transactions.append(Transaction(TransactionType.DEPOSIT,deposit_amount,self.__balance,description="Deposit in account"))
             else:
                 print("Deposit value should be positive")
         else:
@@ -44,7 +50,7 @@ class Account:
             if withdraw_amount > 0:
                 if self.__balance >= withdraw_amount + self.minimum_balance:
                     self.__balance -= withdraw_amount
-                    self.__transactions.append(f"Deducted {withdraw_amount} from the account.")
+                    self.__transactions.append(Transaction(TransactionType.WITHDRAWAL,withdraw_amount,self.__balance,description="Withdrawal from account"))
                 else:
                     print("Withdrawl exceeds minimum account balance of 500.")
             else:
@@ -92,4 +98,11 @@ class Account:
 
         self.withdraw(transfer_amount)
         other.deposit(transfer_amount)
-        
+
+
+# a = Account("anuj",4554,42000)
+# b = Account("banuj",7879,45000)
+# print(a.balance,"\n",b.balance)
+# a.money_transfer(b,415)
+# print(a.balance,"\n",b.balance)
+# print(a)
