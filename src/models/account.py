@@ -4,7 +4,7 @@ class Account:
     """
     Blueprint of the bank account.
     """
-    def __init__(self,name:str,acc_no:float,balance:float = 0, min_bal:float = 500) -> None:
+    def __init__(self,name:str,acc_no:str,balance:float = 0, min_bal:float = 500) -> None:
         """
         Constructor for Account Class
         """
@@ -20,7 +20,7 @@ class Account:
         
 
     def __str__(self) -> str:
-        return f"""Username = {self.name}\nAccount Number = {self.acc_no}\nBalance = {self.balance}\nTransaction history = {self._transactions}"""
+        return f"""Username = {self.name.title()}\nAccount Number = {self.acc_no}\nBalance = {self.balance}\nTransaction history = {self._transactions}"""
 
     @property
     def balance(self) -> float:
@@ -35,7 +35,7 @@ class Account:
         """
         if self.is_active:
             if deposit_amount > 0:
-                self.__balance += deposit_amount
+                self._balance += deposit_amount
                 self._transactions.append(Transaction(txn_type,deposit_amount,self._balance,description=description))
             else:
                 print("Deposit value should be positive")
@@ -48,8 +48,8 @@ class Account:
         """
         if self.is_active:
             if withdraw_amount > 0:
-                if self.__balance >= withdraw_amount + self.minimum_balance:
-                    self.__balance -= withdraw_amount
+                if self._balance >= withdraw_amount + self.minimum_balance:
+                    self._balance -= withdraw_amount
                     self._transactions.append(Transaction(TransactionType.WITHDRAWAL,withdraw_amount,self._balance,description="Withdrawal from account"))
                 else:
                     print("Withdrawl exceeds minimum account balance of 500.")
@@ -92,7 +92,7 @@ class Account:
             print("Transfer amount must be greater than zero.")
             return
 
-        if self.__balance < transfer_amount + self.minimum_balance:
+        if self._balance < transfer_amount + self.minimum_balance:
             print("Transfer failed: Insufficient funds to maintain minimum balance.")
             return
 
@@ -107,7 +107,7 @@ class Account:
                 description=f"Transfer to account {other.acc_no}",
             )
         )
-        other.__transactions.append(
+        other._transactions.append(
             Transaction(
                 TransactionType.TRANSFER_IN,
                 amount=transfer_amount,
@@ -120,7 +120,7 @@ class SavingsAccount(Account):
     """
     Specialized Account that provides interest on it's balance.
     """
-    def __init__(self, name: str, acc_no: float, balance: float = 0, min_bal: float = 500,interest_rate:float = 0.04) -> None:
+    def __init__(self, name: str, acc_no: str, balance: float = 0, min_bal: float = 500,interest_rate:float = 0.04) -> None:
         """
         Constructor for SavingsAccount.
         Calls the parent constructor using super() and initialized interest_rate.
@@ -163,7 +163,7 @@ class CurrentAccount(Account):
     def __init__(
             self,
             name: str, 
-            acc_no: float, 
+            acc_no: str, 
             balance: float = 0.0, 
             min_bal: float = 0.0,
             overdraft_limit:float = 1000.0
@@ -190,7 +190,7 @@ class CurrentAccount(Account):
         
 
 if __name__ == "__main__": 
-    ca = CurrentAccount("Anuj Corp", 8888, balance=500.0, overdraft_limit=1000.0)
+    ca = CurrentAccount("Anuj Corp", "8888", balance=500.0, overdraft_limit=1000.0)
     print(ca)
     print("\n--- Withdrawing 1200 (Overdraft) ---")
     ca.withdraw(1200)
