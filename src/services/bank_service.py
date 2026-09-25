@@ -25,12 +25,14 @@ class BankService:
         return str(bounded_id)
         
 
-    def open_account(self,account_type:str,name:str,initial_deposit:float = 0.0,**kwargs) -> Account:
+    def open_account(self,account_type:str,name:str,initial_deposit:float = 0.0,**kwargs) -> str:
         """
         Method for opening a bank account.
         """
-        acc_type = account_type.lower()
-        name = name.lower()
+        acc_type = account_type.strip().lower()
+        name = name.strip()
+        if not name:
+            raise ValueError("Account holder name cannot be empty.")
         acc_no = self.generate_acc_no()
 
         interest_rate = kwargs.get("interest_rate",0.04)
@@ -40,12 +42,15 @@ class BankService:
             new_acc = SavingsAccount(name=name, acc_no=acc_no,balance=initial_deposit,interest_rate=interest_rate)
         elif acc_type == "current":
             new_acc = CurrentAccount(name=name, acc_no=acc_no,balance=initial_deposit,overdraft_limit=overdraft_limit)
-        else:
+        elif acc_type == "standard":
             new_acc = Account(name=name,acc_no=acc_no,balance=initial_deposit)
+        else:
+            raise ValueError("Account type must be 'standard', 'savings', or 'current'.")
 
         self.accounts[acc_no] = new_acc
         print(f"A new {acc_type.title()} account #{acc_no} is created.")
-        return new_acc
+        return acc_no
+
 
     def get_account(self,acc_no:str) -> Optional[Account]:
         """
@@ -56,21 +61,22 @@ class BankService:
             print(f"Account #{acc_no} doesn't exist.")
         return acc
 
-    def transfer(self,from_acc_no:str,to_acc_no:str,amount:float) -> bool:
+    def transfer(self,from_acc:str,to_acc:str,amount:float) -> bool:
         """
         Method for transferring the money from sender account to recipient account.
         """
-        sender = self.get_account(from_acc_no) 
-        recipient = self.get_account(to_acc_no) 
+        sender = self.get_account(from_acc)
+        recipient = self.get_account(to_acc)
 
         if sender is None or recipient is None:
             return False
         if not sender.is_active or not recipient.is_active:
             return False
-
-        sender.money_transfer(recipient,amount)
-
-        return True
+        if sender == recipient:
+            return False
+        if amount <= 0:
+            return False
+        return sender.money_transfer(recipient,amount)
 
     def close_account(self,acc_no:str) -> bool:
         """
@@ -100,17 +106,14 @@ class BankService:
         return sum((i.balance for i in self.accounts.values()))
         
 
-    def list_all_accounts(self) -> None:
+    def list_all_accounts(self) -> list[Account]:
         """
         Lists all the available accounts in the bank.
         """
         if not self.accounts:
             print("No account in the list.")
-            return 
-        for i in self.accounts.values():
-            print(i)
-            print("-" * 40)
-        return
+            return []
+        return list(self.accounts.values())
 
 if __name__ == "__main__":
     bank = BankService("Python National Bank")
@@ -120,8 +123,8 @@ if __name__ == "__main__":
     print("\n--- 2. Total Reserves ---")
     print(f"Total Bank Reserves: Rs.{bank.get_total_reserves()}")
     print("\n--- 3. Transferring Money ---")
-    bank.transfer(acc1.acc_no, acc2.acc_no, 2500)
+    bank.transfer(acc1, acc2, 2500)
     print("\n--- 4. Listing All Accounts ---")
     bank.list_all_accounts()
     print("\n--- 5. Attempting to Close Account with Balance ---")
-    bank.close_account(acc1.acc_no)
+    bank.close_account(acc1)
