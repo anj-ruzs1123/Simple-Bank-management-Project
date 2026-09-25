@@ -1,3 +1,4 @@
+import math
 from typing  import Optional
 from src.models import Account,SavingsAccount,CurrentAccount
 from uuid import uuid4
@@ -34,6 +35,8 @@ class BankService:
         if not name:
             raise ValueError("Account holder name cannot be empty.")
         acc_no = self.generate_acc_no()
+        while acc_no in self.accounts:
+            acc_no = self.generate_acc_no()
 
         interest_rate = kwargs.get("interest_rate",0.04)
         overdraft_limit = kwargs.get("overdraft_limit",1000)
@@ -74,7 +77,7 @@ class BankService:
             return False
         if sender == recipient:
             return False
-        if amount <= 0:
+        if not math.isfinite(amount) or amount <= 0:
             return False
         return sender.money_transfer(recipient,amount)
 

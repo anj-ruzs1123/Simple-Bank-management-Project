@@ -14,10 +14,8 @@ class Account:
         self.acc_no = acc_no
         if not math.isfinite(min_bal) or min_bal < 0:
             raise ValueError("Minimum balance must be a finite, non-negative amount.")
-        if not math.isfinite(balance) or balance <= 0:
-            raise ValueError("Opening balance must be a finite amount greater than zero.")
-        if balance < min_bal:
-            raise ValueError(f"Opening balance must be at least {min_bal}.")
+        if not math.isfinite(balance) or balance < 0:
+            raise ValueError("Opening balance must be a finite, non-negative amount.")
 
         self.minimum_balance = min_bal
         self._balance = balance
@@ -39,19 +37,35 @@ class Account:
         """
         return self._balance   
 
+    @property
+    def _balance_floor(self) -> float:
+        return self.minimum_balance
+
+    def set_balance(self, new_amount: float) -> None:
+        """Set a valid balance; normal transactions should use deposit or withdraw."""
+        if not math.isfinite(new_amount):
+            raise ValueError("Balance must be a finite amount.")
+        if new_amount < self._balance_floor:
+            raise ValueError(f"Balance cannot be lower than {self._balance_floor}.")
+        self._balance = new_amount
+
     def deposit(self,deposit_amount:float,txn_type:TransactionType = TransactionType.DEPOSIT,description:str = "Deposit in account") -> bool:
         """
         Deposit function of the account.
         """
         if self.is_active:
             if math.isfinite(deposit_amount) and deposit_amount > 0:
-                self._balance += deposit_amount
+                new_balance = self.balance + deposit_amount
+                if not math.isfinite(new_balance):
+                    print("Deposit would exceed the maximum supported balance.")
+                    return False
+                self.set_balance(new_balance)
                 self._transactions.append(Transaction(txn_type,deposit_amount,self._balance,description=description))
                 return True
             else:
                 print("Deposit value should be positive")
         else:
-            print("Account is frozen")
+            print("Account is not active")
         return False
 
     def withdraw(self,withdraw_amount:float,txn_type:TransactionType = TransactionType.WITHDRAWAL,description:str = "Withdrawal from account") -> bool:
@@ -61,7 +75,7 @@ class Account:
         if self.is_active:
             if math.isfinite(withdraw_amount) and withdraw_amount > 0:
                 if self.balance >= withdraw_amount + self.minimum_balance:
-                    self._balance -= withdraw_amount
+                    self.set_balance(self.balance - withdraw_amount)
                     self._transactions.append(Transaction(txn_type,withdraw_amount,self._balance,description=description))
                     return True
                 else:
@@ -91,13 +105,12 @@ class Account:
         """
         self.is_active = True
 
-    def money_transfer(self,other:"Account",transfer_amount:float) -> bool:
+    def money_transfer(self, other: "Account", transfer_amount: float) -> bool:
         """
         Function for transferring money to other account.
         """
         if not isinstance(other, Account):
             raise TypeError("Recipient must be an Account.")
-
         if self.acc_no == other.acc_no:
             print("Cannot self transfer.")
             return False
@@ -108,6 +121,10 @@ class Account:
 
         if not math.isfinite(transfer_amount) or transfer_amount <= 0:
             print("Transfer amount must be greater than zero.")
+            return False
+
+        if not math.isfinite(other.balance + transfer_amount):
+            print("Transfer would exceed the recipient's maximum supported balance.")
             return False
 
         if not self.withdraw(
@@ -157,13 +174,14 @@ class SavingsAccount(Account):
         interest = round(self.balance * self.interest_rate,2)
 
         if interest > 0:
-            if self.deposit(
+            if not self.deposit(
                 interest,
                 txn_type=TransactionType.INTEREST,
                 description=f"Interest credited @{self.interest_rate * 100}%."
             ):
-                print(f"Applied interest of {interest} at rate of {self.interest_rate * 100}%.")
-                return interest
+                return 0.0
+            print(f"Applied interest of {interest} at rate of {self.interest_rate * 100}%.")
+            return interest
         return 0.0
 
     def __str__(self) -> str:
@@ -182,23 +200,27 @@ class CurrentAccount(Account):
             min_bal: float = 0.0,
             overdraft_limit:float = 1000.0
         )-> None:
-        super().__init__(name, acc_no, balance, min_bal)
         if not math.isfinite(overdraft_limit) or overdraft_limit < 0:
             raise ValueError("Overdraft limit must be a finite, non-negative amount.")
+        super().__init__(name, acc_no, balance, min_bal)
         self.overdraft_limit = overdraft_limit
+
+    @property
+    def _balance_floor(self) -> float:
+        return -self.overdraft_limit
 
     def withdraw(
         self,
-        withdraw_amount:float,
-        txn_type:TransactionType = TransactionType.WITHDRAWAL,
-        description:str = "Withdrawal successful.",
+        withdraw_amount: float,
+        txn_type: TransactionType = TransactionType.WITHDRAWAL,
+        description: str = "Withdrawal successful.",
     ) -> bool:
         if not self.is_active:
             print("Account is frozen.")
             return False
         if math.isfinite(withdraw_amount) and withdraw_amount > 0:
             if self.balance - withdraw_amount >= (-self.overdraft_limit):
-                self._balance -= withdraw_amount
+                self.set_balance(self.balance - withdraw_amount)
                 self._transactions.append(
                     Transaction(
                         txn_type,
