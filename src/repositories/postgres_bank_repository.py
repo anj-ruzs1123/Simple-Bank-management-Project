@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from dotenv import load_dotenv
 import os
 from datetime import datetime
 from decimal import Decimal
@@ -23,6 +23,7 @@ class PostgresBankRepository:
 
     def _connect(self) -> psycopg.Connection[DictRow]:
         """Open a PostgreSQL connection using the configured settings."""
+        load_dotenv()
         if self._connection_string:
             return cast(
                 psycopg.Connection[DictRow],
