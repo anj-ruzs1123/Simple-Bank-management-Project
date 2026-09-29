@@ -165,4 +165,6 @@ These tests are designed to run without a PostgreSQL connection. They cover doma
 
 ## License
 
-No `LICENSE` file has been added yet, so the project is currently unlicensed. For a personal portfolio project where you want others to be able to use, modify, and share it with minimal friction, **MIT License** is a straightforward recommendation. Add the standard MIT `LICENSE` file before describing the repository as MIT-licensed. Apache-2.0 is another permissive option if you specifically want an express patent grant. This is practical guidance, not legal advice.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+
