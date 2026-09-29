@@ -4,3 +4,12 @@ pycache
 D:\Anuj Jain\lessions\OOPs with project\src\models\__pycache__
 venv
 FIX_SUGGESTIONS.md
+D:\Anuj Jain\lessions\OOPs with project\POSTGRESQL_GUIDE.md
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+POSTGRESQL_GUIDE.md
+report.md

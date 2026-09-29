@@ -1,11 +1,65 @@
 import unittest
 from contextlib import redirect_stdout
+from decimal import Decimal
 from io import StringIO
 from unittest.mock import patch
 
 from main import main
 from src.models import Account, CurrentAccount, SavingsAccount, TransactionType
 from src.services.bank_service import BankService
+
+
+class InMemoryBankRepository:
+    def __init__(self) -> None:
+        self.accounts: dict[str, Account] = {}
+
+    def create_account(self, account: Account) -> None:
+        self.accounts[account.acc_no] = account
+
+    def get_account(self, account_number: str) -> Account | None:
+        return self.accounts.get(account_number)
+
+    def list_accounts(self) -> list[Account]:
+        return list(self.accounts.values())
+
+    def deposit(self, account_number: str, amount: Decimal) -> bool:
+        return self.accounts[account_number].deposit(amount)
+
+    def withdraw(self, account_number: str, amount: Decimal) -> bool:
+        return self.accounts[account_number].withdraw(amount)
+
+    def transfer(self, sender_number: str, recipient_number: str, amount: Decimal) -> bool:
+        return self.accounts[sender_number].money_transfer(
+            self.accounts[recipient_number],
+            amount,
+        )
+
+    def apply_interest(self, account_number: str) -> Decimal:
+        account = self.accounts[account_number]
+        if isinstance(account, SavingsAccount):
+            return account.apply_interest()
+        return Decimal("0.00")
+
+    def set_account_active(self, account_number: str, is_active: bool) -> bool:
+        account = self.accounts.get(account_number)
+        if account is None:
+            return False
+        account.is_active = is_active
+        return True
+
+    def close_account(self, account_number: str) -> bool:
+        account = self.accounts.get(account_number)
+        if account is None or account.balance != 0:
+            return False
+        account.is_active = False
+        account.is_closed = True
+        return True
+
+    def get_total_reserves(self) -> Decimal:
+        return sum(
+            (account.balance for account in self.accounts.values() if not account.is_closed),
+            Decimal("0.00"),
+        )
 
 
 class AccountOperationTests(unittest.TestCase):
@@ -94,10 +148,15 @@ class AccountOperationTests(unittest.TestCase):
     def test_cli_opens_zero_balance_account_and_exits(self) -> None:
         inputs = iter(["1", "standard", "CLI User", "0", "9"])
         output = StringIO()
+        repository = InMemoryBankRepository()
 
         with (
             patch("builtins.input", side_effect=lambda _: next(inputs)),
-            patch("main.BankService.generate_acc_no", return_value="1001"),
+            patch(
+                "main.BankService",
+                side_effect=lambda bank_name: BankService(bank_name, repository),
+            ),
+            patch.object(BankService, "generate_acc_no", return_value="1001"),
             redirect_stdout(output),
         ):
             main()
